@@ -1,14 +1,8 @@
 import { http, HttpResponse } from "msw";
+import { db } from "./db";
 
 export const handlers = [
-  http.get("/categories", () => {
-    return HttpResponse.json([
-      { id: 1, name: "Electronics" },
-      { id: 2, name: "Cosmethics" },
-      { id: 3, name: "Hardware" },
-    ]);
-  }),
-  http.get("/products", () => {
+  /* http.get("/products", () => {
     return HttpResponse.json([
       { id: 1, name: "Prod1" },
       { id: 2, name: "Prod2" },
@@ -18,5 +12,7 @@ export const handlers = [
   http.get("/products/:id", ({ params }) => {
     const { id } = params;
     return HttpResponse.json({ id, name: `Prod${id}`, price: +id! * 10 });
-  }),
+  }), */
+  ...db.product.toHandlers("rest"),
+  ...db.category.toHandlers("rest"),
 ];
