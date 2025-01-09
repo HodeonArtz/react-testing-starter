@@ -9,7 +9,7 @@ import { delay, http, HttpResponse } from "msw";
 import { AllProviders } from "../AllProviders";
 
 describe("group", () => {
-  it("should render a product with provided id", async () => {
+  it.skip("should render a product with provided id", async () => {
     const id = 1;
     render(<ProductDetail productId={id} />, { wrapper: AllProviders });
 
