@@ -1,11 +1,8 @@
-import {
-  render,
-  screen,
-  waitForElementToBeRemoved,
-} from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import ProductForm from "../../src/components/ProductForm";
-import { AllProviders } from "../AllProviders";
 import { Category, Product } from "../../src/entities";
+import { AllProviders } from "../AllProviders";
 import { db } from "../mocks/db";
 
 describe("ProductForm", () => {
@@ -26,31 +23,27 @@ describe("ProductForm", () => {
     );
 
     const waitForFormToLoad = async () => {
-      await waitForElementToBeRemoved(() => screen.queryAllByText(/loading/i));
-    };
-
-    const getInputs = () => {
+      await screen.findByRole("form");
       return {
         nameField: screen.getByPlaceholderText(/name/i),
         priceField: screen.getByPlaceholderText(/price/i),
         comboBoxField: screen.getByRole("combobox", { name: /category/i }),
+        submitButton: screen.getByRole("button"),
       };
     };
 
     return {
       waitForFormToLoad,
-      getInputs,
     };
   };
 
   it("should render form fields", async () => {
-    const { getInputs, waitForFormToLoad } = renderComponent();
-    await waitForFormToLoad();
-    const inputs = getInputs();
+    const { waitForFormToLoad } = renderComponent();
+    const { nameField, priceField, comboBoxField } = await waitForFormToLoad();
 
-    expect(inputs.nameField).toBeInTheDocument();
-    expect(inputs.priceField).toBeInTheDocument();
-    expect(inputs.comboBoxField).toBeInTheDocument();
+    expect(nameField).toBeInTheDocument();
+    expect(priceField).toBeInTheDocument();
+    expect(comboBoxField).toBeInTheDocument();
   });
 
   it("should populate form fields when editing a product ", async () => {
@@ -60,20 +53,34 @@ describe("ProductForm", () => {
       price: 10,
       categoryId: category.id,
     };
-    const { getInputs, waitForFormToLoad } = renderComponent(product);
+    const { waitForFormToLoad } = renderComponent(product);
+    const { nameField, priceField, comboBoxField } = await waitForFormToLoad();
 
-    await waitForFormToLoad();
-    const inputs = getInputs();
-
-    expect(inputs.nameField).toHaveValue(product.name);
-    expect(inputs.priceField).toHaveValue(product.price.toString());
-    expect(inputs.comboBoxField).toHaveTextContent(category.name);
+    expect(nameField).toHaveValue(product.name);
+    expect(priceField).toHaveValue(product.price.toString());
+    expect(comboBoxField).toHaveTextContent(category.name);
   });
 
   it("should focus name input", async () => {
-    const { getInputs, waitForFormToLoad } = renderComponent();
-    await waitForFormToLoad();
-    const inputs = getInputs();
-    expect(inputs.nameField).toHaveFocus();
+    const { waitForFormToLoad } = renderComponent();
+
+    const { nameField } = await waitForFormToLoad();
+
+    expect(nameField).toHaveFocus();
+  });
+
+  it("should display an error if name is missing", async () => {
+    const { waitForFormToLoad } = renderComponent();
+    const form = await waitForFormToLoad();
+    const user = userEvent.setup();
+    await user.type(form.priceField, "10");
+    await user.click(form.comboBoxField);
+    const options = screen.getAllByRole("option");
+    await user.click(options[0]);
+    await user.click(form.submitButton);
+
+    const error = screen.getByRole("alert");
+    expect(error).toBeInTheDocument();
+    expect(error).toHaveTextContent(/required/i);
   });
 });
