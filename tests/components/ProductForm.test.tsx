@@ -1,10 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { Toaster } from "react-hot-toast";
 import ProductForm from "../../src/components/ProductForm";
 import { Category, Product } from "../../src/entities";
 import { AllProviders } from "../AllProviders";
 import { db } from "../mocks/db";
-import { Toaster } from "react-hot-toast";
 
 describe("ProductForm", () => {
   let category: Category;
@@ -41,7 +41,7 @@ describe("ProductForm", () => {
 
       const validData: FormData = {
         id: 1,
-        name: "a",
+        name: "aaaa",
         price: 1,
         categoryId: category.id,
       };
@@ -147,6 +147,11 @@ describe("ProductForm", () => {
       errorMessage: /required/i,
     },
     {
+      scenario: "missing",
+      name: " ",
+      errorMessage: /invalid/i,
+    },
+    {
       scenario: "longer than 255",
       name: "a".repeat(256),
       errorMessage: /255/,
@@ -183,5 +188,14 @@ describe("ProductForm", () => {
     const toast = await screen.findByRole("status");
     expect(toast).toBeInTheDocument();
     expect(toast).toHaveTextContent(/error/i);
+  });
+
+  it("should disable button when submitting", async () => {
+    const { waitForFormToLoad, onSubmit } = renderComponent();
+    onSubmit.mockReturnValue(new Promise(() => {}));
+    const form = await waitForFormToLoad();
+    await form.fill({ ...form.validData });
+
+    expect(form.submitButton).toBeDisabled();
   });
 });
